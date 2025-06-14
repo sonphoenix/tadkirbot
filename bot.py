@@ -47,7 +47,7 @@ def draw_centered_text(draw, text, font, img_width, y, fill="white"):
     return y
 
 def create_image(arabic_verse, english_verse, reference):
-    backgrounds = ["background1.jpg", "background2.jpg", "background3.jpg", "background4.jpg"]
+    backgrounds = ["background1.jpg", "background2.jpg", "background3.jpg", "background4.jpg","background5.jpg","background6.jpg"]
     chosen_bg = random.choice(backgrounds)
     
     img = Image.open(os.path.join("images", chosen_bg)).convert("RGB")
