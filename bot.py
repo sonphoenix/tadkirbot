@@ -16,23 +16,23 @@ TOTAL_VERSES = 6236
 
 def get_random_verse():
     verse_id = random.randint(1, TOTAL_VERSES)
-
+    
     en_url = f"https://api.alquran.cloud/v1/ayah/{verse_id}/en.asad"
     ar_url = f"https://api.alquran.cloud/v1/ayah/{verse_id}/ar"
-
+    
     en_data = requests.get(en_url).json()
     ar_data = requests.get(ar_url).json()
-
+    
     if en_data["status"] != "OK" or ar_data["status"] != "OK":
         raise Exception("API error")
-
+    
     en_ayah = en_data["data"]
     ar_ayah = ar_data["data"]
-
+    
     en_text = en_ayah["text"]
     ar_text = ar_ayah["text"]
     reference = f"{en_ayah['surah']['englishName']} - Ayah {en_ayah['numberInSurah']}"
-
+    
     return ar_text, en_text, reference
 
 def draw_centered_text(draw, text, font, img_width, y, fill="white"):
@@ -49,27 +49,30 @@ def draw_centered_text(draw, text, font, img_width, y, fill="white"):
 def create_image(arabic_verse, english_verse, reference):
     backgrounds = ["background1.jpg", "background2.jpg", "background3.jpg", "background4.jpg"]
     chosen_bg = random.choice(backgrounds)
-
+    
     img = Image.open(os.path.join("images", chosen_bg)).convert("RGB")
     draw = ImageDraw.Draw(img)
-
+    
     arabic_font = ImageFont.truetype("fonts/Amiri-Regular.ttf", 48)
     english_font = ImageFont.truetype("fonts/Amiri-Regular.ttf", 36)
     small_font = ImageFont.truetype("fonts/Amiri-Regular.ttf", 28)
-
+    
     img_width, _ = img.size
     y = 180
-
+    
+    # FIX: Use the reshaped text for bidi display
     reshaped = arabic_reshaper.reshape(arabic_verse)
-    bidi_arabic = get_display(arabic_verse)
-    print("🔤 verse Arabic:", bidi_arabic)
-    print("🔤 Reshaped Arabic:", bidi_arabic)
-
+    bidi_arabic = get_display(reshaped)  # ✅ Use reshaped text!
+    
+    print("🔤 Original Arabic:", arabic_verse)
+    print("🔤 Reshaped Arabic:", reshaped)
+    print("🔤 BIDI Arabic:", bidi_arabic)
+    
     y = draw_centered_text(draw, bidi_arabic, arabic_font, img_width, y)
     y += 20
     y = draw_centered_text(draw, english_verse, english_font, img_width, y)
     draw_centered_text(draw, reference, small_font, img_width, y + 30)
-
+    
     out_path = "generated/output.jpg"
     img.save(out_path)
     return out_path
@@ -93,10 +96,9 @@ def post_to_facebook(img_path, caption):
 def main():
     ar_text, en_text, ref = get_random_verse()
     img_path = create_image(ar_text, en_text, ref)
-
+    
     caption = f"{en_text}\n\n{ref}"
     result = post_to_facebook(img_path, caption)
-
 
 if __name__ == "__main__":
     main()
