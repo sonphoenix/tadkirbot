@@ -94,7 +94,6 @@ def main():
 
     caption = f"{en_text}\n\n{ref}"
     result = post_to_facebook(img_path, caption)
-    time.sleep(3600)
 
 
 if __name__ == "__main__":
