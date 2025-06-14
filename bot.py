@@ -226,11 +226,10 @@ def post_to_facebook(img_path, caption):
     post_response = requests.post(post_url, data=post_data)
     post_result = post_response.json()
     
-    if "error" in post_result:
-        print("❌ Post Error:", post_result["error"]["message"])
-    else:
+    if post_response.status_code==200:
         print("✅ Successfully posted to Facebook feed.")
-    
+    else:
+        print("❌ Post Error:", post_result["error"]["message"])    
     return post_result
 
 
