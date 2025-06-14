@@ -35,46 +35,165 @@ def get_random_verse():
     
     return ar_text, en_text, reference
 
-def draw_centered_text(draw, text, font, img_width, y, fill="white"):
-    lines = textwrap.wrap(text, width=50)
+def get_adaptive_font_size(text, font_path, max_width, max_height, min_size=20, max_size=80):
+    """Dynamically adjust font size to fit text within bounds"""
+    best_size = min_size
+    
+    for size in range(min_size, max_size + 1, 2):
+        try:
+            font = ImageFont.truetype(font_path, size)
+            # Create temporary draw to measure text
+            temp_img = Image.new('RGB', (1, 1))
+            temp_draw = ImageDraw.Draw(temp_img)
+            
+            # Calculate text dimensions with word wrapping
+            words = text.split()
+            lines = []
+            current_line = []
+            
+            for word in words:
+                test_line = ' '.join(current_line + [word])
+                bbox = temp_draw.textbbox((0, 0), test_line, font=font)
+                line_width = bbox[2] - bbox[0]
+                
+                if line_width <= max_width:
+                    current_line.append(word)
+                else:
+                    if current_line:
+                        lines.append(' '.join(current_line))
+                        current_line = [word]
+                    else:
+                        # Single word is too long, force it
+                        lines.append(word)
+            
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            # Calculate total height
+            total_height = 0
+            for line in lines:
+                bbox = temp_draw.textbbox((0, 0), line, font=font)
+                line_height = bbox[3] - bbox[1]
+                total_height += line_height + 10  # 10px line spacing
+            
+            if total_height <= max_height:
+                best_size = size
+            else:
+                break
+                
+        except Exception:
+            break
+    
+    return best_size
+
+def draw_adaptive_text(draw, text, font_path, img_width, img_height, y_start, max_height_ratio=0.25, fill="white", stroke_width=2, stroke_fill="black"):
+    """Draw text that adapts to image dimensions with outline for better readability"""
+    max_width = int(img_width * 0.9)  # 90% of image width
+    max_height = int(img_height * max_height_ratio)  # Percentage of image height
+    
+    # Get optimal font size
+    font_size = get_adaptive_font_size(text, font_path, max_width, max_height)
+    font = ImageFont.truetype(font_path, font_size)
+    
+    # Wrap text to fit within width
+    words = text.split()
+    lines = []
+    current_line = []
+    
+    for word in words:
+        test_line = ' '.join(current_line + [word])
+        bbox = draw.textbbox((0, 0), test_line, font=font)
+        line_width = bbox[2] - bbox[0]
+        
+        if line_width <= max_width:
+            current_line.append(word)
+        else:
+            if current_line:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+            else:
+                lines.append(word)
+    
+    if current_line:
+        lines.append(' '.join(current_line))
+    
+    # Draw each line centered with outline
+    current_y = y_start
     for line in lines:
         bbox = draw.textbbox((0, 0), line, font=font)
-        w = bbox[2] - bbox[0]
-        h = bbox[3] - bbox[1]
-        x = (img_width - w) / 2
-        draw.text((x, y), line, font=font, fill=fill)
-        y += h + 10
-    return y
+        line_width = bbox[2] - bbox[0]
+        line_height = bbox[3] - bbox[1]
+        x = (img_width - line_width) / 2
+        
+        # Draw outline for better readability
+        for adj in range(-stroke_width, stroke_width + 1):
+            for adj2 in range(-stroke_width, stroke_width + 1):
+                draw.text((x + adj, current_y + adj2), line, font=font, fill=stroke_fill)
+        
+        # Draw main text
+        draw.text((x, current_y), line, font=font, fill=fill)
+        current_y += line_height + 10
+    
+    return current_y
 
 def create_image(arabic_verse, english_verse, reference):
-    backgrounds = ["background1.jpg", "background2.jpg", "background3.jpg", "background4.jpg","background5.jpg","background6.jpg"]
+    backgrounds = ["background1.jpg", "background2.jpg", "background3.jpg", "background4.jpg", "background5.jpg", "background6.jpg"]
     chosen_bg = random.choice(backgrounds)
     
     img = Image.open(os.path.join("images", chosen_bg)).convert("RGB")
     draw = ImageDraw.Draw(img)
     
-    arabic_font = ImageFont.truetype("fonts/Amiri-Regular.ttf", 48)
-    english_font = ImageFont.truetype("fonts/Amiri-Regular.ttf", 36)
-    small_font = ImageFont.truetype("fonts/Amiri-Regular.ttf", 28)
+    img_width, img_height = img.size
+    print(f"📏 Image dimensions: {img_width}x{img_height}")
     
-    img_width, _ = img.size
-    y = 180
-    
-    # FIX: Use the reshaped text for bidi display
+    # Process Arabic text properly
     reshaped = arabic_reshaper.reshape(arabic_verse)
-    bidi_arabic = get_display(reshaped)  # ✅ Use reshaped text!
+    bidi_arabic = get_display(reshaped)
     
     print("🔤 Original Arabic:", arabic_verse)
     print("🔤 Reshaped Arabic:", reshaped)
     print("🔤 BIDI Arabic:", bidi_arabic)
     
-    y = draw_centered_text(draw, arabic_verse, arabic_font, img_width, y)
-    y += 20
-    y = draw_centered_text(draw, english_verse, english_font, img_width, y)
-    draw_centered_text(draw, reference, small_font, img_width, y + 30)
+    # Calculate layout based on image dimensions
+    if img_width > img_height:  # Landscape
+        arabic_start_y = int(img_height * 0.15)  # Start at 15% from top
+        arabic_max_height = 0.3  # Use 30% of height for Arabic
+        english_max_height = 0.35  # Use 35% of height for English
+        reference_y_offset = 40
+    else:  # Portrait or square
+        arabic_start_y = int(img_height * 0.2)   # Start at 20% from top
+        arabic_max_height = 0.25  # Use 25% of height for Arabic
+        english_max_height = 0.3   # Use 30% of height for English
+        reference_y_offset = 30
+    
+    # Draw Arabic text
+    y = draw_adaptive_text(
+        draw, arabic_verse, "fonts/Amiri-Regular.ttf", 
+        img_width, img_height, arabic_start_y, 
+        arabic_max_height, fill="white", stroke_width=2, stroke_fill="black"
+    )
+    
+    # Add spacing between Arabic and English
+    y += 30
+    
+    # Draw English text
+    y = draw_adaptive_text(
+        draw, english_verse, "fonts/Amiri-Regular.ttf", 
+        img_width, img_height, y, 
+        english_max_height, fill="white", stroke_width=1, stroke_fill="black"
+    )
+    
+    # Draw reference with smaller max height
+    y += reference_y_offset
+    draw_adaptive_text(
+        draw, reference, "fonts/Amiri-Regular.ttf", 
+        img_width, img_height, y, 
+        0.15, fill="lightgray", stroke_width=1, stroke_fill="black"
+    )
     
     out_path = "generated/output.jpg"
-    img.save(out_path)
+    os.makedirs("generated", exist_ok=True)
+    img.save(out_path, quality=95)  # High quality output
     return out_path
 
 def post_to_facebook(img_path, caption):
