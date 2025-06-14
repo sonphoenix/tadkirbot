@@ -1,5 +1,5 @@
+arabic-reshaper
+python-bidi
+Pillow
 requests
 python-dotenv
-Pillow
-arabic_reshaper
-python-bidi
