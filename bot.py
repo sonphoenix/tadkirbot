@@ -197,20 +197,42 @@ def create_image(arabic_verse, english_verse, reference):
     return out_path
 
 def post_to_facebook(img_path, caption):
-    url = f"https://graph.facebook.com/v23.0/{PAGE_ID}/photos"
+    # Step 1: Upload the image as unpublished
+    upload_url = f"https://graph.facebook.com/v23.0/{PAGE_ID}/photos"
     with open(img_path, 'rb') as img_file:
         files = {'source': img_file}
         data = {
-            'caption': caption,
+            'published': 'false',
             'access_token': ACCESS_TOKEN
         }
-        response = requests.post(url, files=files, data=data)
-        result = response.json()
-        if "error" in result:
-            print("❌ Facebook Error:", result["error"]["message"])
-        else:
-            print("✅ Successfully posted to Facebook.")
-        return result
+        upload_response = requests.post(upload_url, files=files, data=data)
+        upload_result = upload_response.json()
+        
+        if "error" in upload_result:
+            print("❌ Upload Error:", upload_result["error"]["message"])
+            return upload_result
+        
+        photo_id = upload_result["id"]
+        print(f"📸 Uploaded photo ID: {photo_id}")
+    
+    # Step 2: Create a post with that uploaded photo
+    post_url = f"https://graph.facebook.com/v23.0/{PAGE_ID}/feed"
+    post_data = {
+        'message': caption,
+        'attached_media': f'[{{"media_fbid":"{photo_id}"}}]',
+        'access_token': ACCESS_TOKEN
+    }
+    
+    post_response = requests.post(post_url, data=post_data)
+    post_result = post_response.json()
+    
+    if "error" in post_result:
+        print("❌ Post Error:", post_result["error"]["message"])
+    else:
+        print("✅ Successfully posted to Facebook feed.")
+    
+    return post_result
+
 
 def main():
     ar_text, en_text, ref = get_random_verse()
