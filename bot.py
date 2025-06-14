@@ -216,7 +216,7 @@ def post_to_facebook(img_path, caption):
         print(f"📸 Uploaded photo ID: {photo_id}")
     
     # Step 2: Create a post with that uploaded photo
-    post_url = f"https://graph.facebook.com/v23.0/{PAGE_ID}/feed"
+    post_url = f"https://graph.facebook.com/v20.0/{PAGE_ID}/feed"
     post_data = {
         'message': caption,
         'attached_media': f'[{{"media_fbid":"{photo_id}"}}]',
