@@ -1,0 +1,6 @@
+services:
+  - type: cron
+    name: quran-bot-job
+    runtime: python
+    schedule: "@hourly"
+    startCommand: python bot.py
