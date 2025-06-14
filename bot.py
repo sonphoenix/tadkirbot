@@ -68,7 +68,7 @@ def create_image(arabic_verse, english_verse, reference):
     print("🔤 Reshaped Arabic:", reshaped)
     print("🔤 BIDI Arabic:", bidi_arabic)
     
-    y = draw_centered_text(draw, bidi_arabic, arabic_font, img_width, y)
+    y = draw_centered_text(draw, arabic_verse, arabic_font, img_width, y)
     y += 20
     y = draw_centered_text(draw, english_verse, english_font, img_width, y)
     draw_centered_text(draw, reference, small_font, img_width, y + 30)
