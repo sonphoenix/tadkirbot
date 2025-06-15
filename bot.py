@@ -15,11 +15,27 @@ PAGE_ID = os.getenv("PAGE_ID")
 HADITH_API_KEY = os.getenv("HADITH_API_KEY")
 TOTAL_VERSES = 6236
 
-import os
-import random
-import requests
+def get_random_verse():
+    verse_id = random.randint(1, TOTAL_VERSES)
+    
+    en_url = f"https://api.alquran.cloud/v1/ayah/{verse_id}/en.asad"
+    ar_url = f"https://api.alquran.cloud/v1/ayah/{verse_id}/ar"
+    
+    en_data = requests.get(en_url).json()
+    ar_data = requests.get(ar_url).json()
+    
+    if en_data["status"] != "OK" or ar_data["status"] != "OK":
+        raise Exception("API error")
+    
+    en_ayah = en_data["data"]
+    ar_ayah = ar_data["data"]
+    
+    en_text = en_ayah["text"]
+    ar_text = ar_ayah["text"]
+    reference = f"{en_ayah['surah']['englishName']} - Ayah {en_ayah['numberInSurah']}"
+    
+    return ar_text, en_text, reference
 
-HADITH_API_KEY = os.getenv("HADITH_API_KEY")
 def get_random_hadith():
     random_hadith_number = random.randint(1, 7563)
     
