@@ -12,6 +12,7 @@ from bidi.algorithm import get_display
 load_dotenv()
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 PAGE_ID = os.getenv("PAGE_ID")
+HADITH_API_KEY = os.getenv("HADITH_API_KEY")
 TOTAL_VERSES = 6236
 
 def get_random_verse():
@@ -34,6 +35,32 @@ def get_random_verse():
     reference = f"{en_ayah['surah']['englishName']} - Ayah {en_ayah['numberInSurah']}"
     
     return ar_text, en_text, reference
+
+def get_random_hadith():
+    url = (
+        "https://www.hadithapi.com/api/hadiths"
+        f"?apiKey={HADITH_API_KEY}"
+        "&book=sahih-bukhari"
+        "&status=Sahih"
+        "&paginate=1"
+    )
+    response = requests.get(url)
+    data = response.json()
+
+    if response.status_code != 200 or not data.get("hadiths", {}).get("data"):
+        raise Exception(f"Hadith API error: {data}")
+
+    hadith = random.choice(data["hadiths"]["data"])
+
+    ar_text = hadith.get("hadithArabic", "").strip()
+    en_text = hadith.get("hadithEnglish", "").strip()
+    number = hadith.get("hadithNumber", "N/A")
+    book_name = hadith.get("book", {}).get("bookName", "Unknown Book")
+    status = hadith.get("status", "Unknown Status")
+    ref = f"{status} – {book_name} – Hadith #{number}"
+    return ar_text, en_text, ref
+
+
 
 def get_adaptive_font_size(text, font_path, max_width, max_height, min_size=20, max_size=80):
     """Dynamically adjust font size to fit text within bounds"""
@@ -234,11 +261,17 @@ def post_to_facebook(img_path, caption):
 
 
 def main():
-    ar_text, en_text, ref = get_random_verse()
-    img_path = create_image(ar_text, en_text, ref)
+    if random.random() < 0.5:
+        print("📖 Posting a Quran verse.")
+        ar_text, en_text, ref = get_random_verse()
+    else:
+        print("📜 Posting a Hadith from Sahih Bukhari.")
+        ar_text, en_text, ref = get_random_hadith()
     
+    img_path = create_image(ar_text, en_text, ref)
     caption = f"{en_text}\n\n{ref}"
-    result = post_to_facebook(img_path, caption)
+    #result = post_to_facebook(img_path, caption)
+
 
 if __name__ == "__main__":
     main()
