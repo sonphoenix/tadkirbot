@@ -272,7 +272,7 @@ def post_to_facebook(img_path, caption):
 
 
 def main():
-    if random.random() < 0.1:
+    if random.random() < 0.5:
         print("📖 Posting a Quran verse.")
         ar_text, en_text, ref = get_random_verse()
     else:
