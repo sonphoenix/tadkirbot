@@ -15,54 +15,45 @@ PAGE_ID = os.getenv("PAGE_ID")
 HADITH_API_KEY = os.getenv("HADITH_API_KEY")
 TOTAL_VERSES = 6236
 
-def get_random_verse():
-    verse_id = random.randint(1, TOTAL_VERSES)
-    
-    en_url = f"https://api.alquran.cloud/v1/ayah/{verse_id}/en.asad"
-    ar_url = f"https://api.alquran.cloud/v1/ayah/{verse_id}/ar"
-    
-    en_data = requests.get(en_url).json()
-    ar_data = requests.get(ar_url).json()
-    
-    if en_data["status"] != "OK" or ar_data["status"] != "OK":
-        raise Exception("API error")
-    
-    en_ayah = en_data["data"]
-    ar_ayah = ar_data["data"]
-    
-    en_text = en_ayah["text"]
-    ar_text = ar_ayah["text"]
-    reference = f"{en_ayah['surah']['englishName']} - Ayah {en_ayah['numberInSurah']}"
-    
-    return ar_text, en_text, reference
+import os
+import random
+import requests
 
+HADITH_API_KEY = os.getenv("HADITH_API_KEY")
 def get_random_hadith():
-    total_hadiths = 7275
-    random_page = random.randint(1, total_hadiths)
-
+    random_hadith_number = random.randint(1, 7563)
+    
     url = (
-        "https://www.hadithapi.com/api/hadiths"
+        "https://hadithapi.com/api/hadiths"
         f"?apiKey={HADITH_API_KEY}"
         "&book=sahih-bukhari"
         "&status=Sahih"
-        f"&per_page=1&page={random_page}"
+        f"&hadithNumber={random_hadith_number}"
     )
-
+    
     response = requests.get(url)
+    
+    if response.status_code != 200:
+        raise Exception(f"HTTP error: {response.status_code}")
+    
     data = response.json()
-
-    if response.status_code != 200 or not data.get("hadiths", {}).get("data"):
-        raise Exception(f"Hadith API error: {data}")
-
+    
+    # If this specific number doesn't exist, try the first approach
+    if not data.get("hadiths", {}).get("data"):
+        return get_random_hadith()
+    
     hadith = data["hadiths"]["data"][0]
-
+    
     ar_text = hadith.get("hadithArabic", "").strip()
     en_text = hadith.get("hadithEnglish", "").strip()
     number = hadith.get("hadithNumber", "N/A")
     book_name = hadith.get("book", {}).get("bookName", "Unknown Book")
     status = hadith.get("status", "Unknown Status")
+    
     ref = f"{status} – {book_name} – Hadith #{number}"
+    
     return ar_text, en_text, ref
+
 
 
 
@@ -274,7 +265,7 @@ def main():
     
     img_path = create_image(ar_text, en_text, ref)
     caption = f"{en_text}\n\n{ref}"
-    result = post_to_facebook(img_path, caption)
+    #result = post_to_facebook(img_path, caption)
 
 
 if __name__ == "__main__":
