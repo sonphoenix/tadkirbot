@@ -37,20 +37,24 @@ def get_random_verse():
     return ar_text, en_text, reference
 
 def get_random_hadith():
+    total_hadiths = 7275
+    random_page = random.randint(1, total_hadiths)
+
     url = (
         "https://www.hadithapi.com/api/hadiths"
-        f"?apiKey=$2y$10$xjxtDQBUuraTKs8monoReJo9rq3Jvoy8AYjb3N55cVCrv11Al3c2"
+        f"?apiKey={HADITH_API_KEY}"
         "&book=sahih-bukhari"
         "&status=Sahih"
-        "&paginate=1"
+        f"&per_page=1&page={random_page}"
     )
+
     response = requests.get(url)
     data = response.json()
 
     if response.status_code != 200 or not data.get("hadiths", {}).get("data"):
         raise Exception(f"Hadith API error: {data}")
 
-    hadith = random.choice(data["hadiths"]["data"])
+    hadith = data["hadiths"]["data"][0]
 
     ar_text = hadith.get("hadithArabic", "").strip()
     en_text = hadith.get("hadithEnglish", "").strip()

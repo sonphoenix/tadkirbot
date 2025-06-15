@@ -27,4 +27,6 @@ jobs:
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           PAGE_ID: ${{ secrets.PAGE_ID }}
+          HADITH_API_KEY: ${{ secrets.HADITH_API_KEY }}
+
         run: python bot.py
