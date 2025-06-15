@@ -261,7 +261,7 @@ def post_to_facebook(img_path, caption):
 
 
 def main():
-    if random.random() < 0.5:
+    if random.random() < 0.1:
         print("📖 Posting a Quran verse.")
         ar_text, en_text, ref = get_random_verse()
     else:
@@ -270,7 +270,7 @@ def main():
     
     img_path = create_image(ar_text, en_text, ref)
     caption = f"{en_text}\n\n{ref}"
-    #result = post_to_facebook(img_path, caption)
+    result = post_to_facebook(img_path, caption)
 
 
 if __name__ == "__main__":
