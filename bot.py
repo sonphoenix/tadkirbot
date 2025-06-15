@@ -39,7 +39,7 @@ def get_random_verse():
 def get_random_hadith():
     url = (
         "https://www.hadithapi.com/api/hadiths"
-        f"?apiKey={HADITH_API_KEY}"
+        f"?apiKey=$2y$10$xjxtDQBUuraTKs8monoReJo9rq3Jvoy8AYjb3N55cVCrv11Al3c2"
         "&book=sahih-bukhari"
         "&status=Sahih"
         "&paginate=1"
