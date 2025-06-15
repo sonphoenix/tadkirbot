@@ -265,7 +265,7 @@ def main():
     
     img_path = create_image(ar_text, en_text, ref)
     caption = f"{en_text}\n\n{ref}"
-    #result = post_to_facebook(img_path, caption)
+    result = post_to_facebook(img_path, caption)
 
 
 if __name__ == "__main__":
