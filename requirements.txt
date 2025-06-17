@@ -3,3 +3,4 @@ python-bidi
 Pillow
 requests
 python-dotenv
+flask

@@ -2,6 +2,7 @@ import os
 import requests
 import random
 import textwrap
+import json
 import time
 from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
@@ -14,6 +15,46 @@ ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 PAGE_ID = os.getenv("PAGE_ID")
 HADITH_API_KEY = os.getenv("HADITH_API_KEY")
 TOTAL_VERSES = 6236
+
+
+
+def get_random_local_dua():
+    base_path = "dua-dhikr/data/dua-dhikr"
+    categories = [
+        "daily-dua",
+        "dhikr-after-salah",
+        "evening-dhikr",
+        "morning-dhikr",
+        "selected-dua"
+    ]
+    
+    # Random category
+    chosen_category = random.choice(categories)
+    file_path = os.path.join(base_path, chosen_category, "en.json")
+    
+    # Load the JSON content
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            duas = json.load(f)
+    except Exception as e:
+        print(f"Error reading {file_path}: {e}")
+        return None, None, None
+    
+    if not duas:
+        print(f"No duas found in {chosen_category}")
+        return None, None, None
+
+    # Pick a random dua
+    dua = random.choice(duas)
+
+    # Extract fields safely
+    arabic = dua.get("arabic", "").strip()
+    english = dua.get("translation", "").strip()
+    title = dua.get("title", "").strip()
+    reference = f"{chosen_category.replace('-', ' ').title()} – {title}"
+    
+    return arabic, english, reference
+
 
 def get_random_verse():
     verse_id = random.randint(1, TOTAL_VERSES)
@@ -272,16 +313,24 @@ def post_to_facebook(img_path, caption):
 
 
 def main():
-    if random.random() < 0.5:
+    choice = random.choice(["verse", "hadith", "dua"])
+    
+    if choice == "verse":
         print("📖 Posting a Quran verse.")
         ar_text, en_text, ref = get_random_verse()
-    else:
+        
+    elif choice == "hadith":
         print("📜 Posting a Hadith from Sahih Bukhari.")
         ar_text, en_text, ref = get_random_hadith()
+        
+    else:
+        print("🤲 Posting a Dua.")
+        ar_text, en_text, ref = get_random_local_dua()
     
     img_path = create_image(ar_text, en_text, ref)
     caption = f"{en_text}\n\n{ref}"
     result = post_to_facebook(img_path, caption)
+
 
 
 if __name__ == "__main__":
